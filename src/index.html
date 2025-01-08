@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="styles.css">
+  <title>Sistema de Ventas</title>
+</head>
+<body>
+  <h1>SISTEMA DE VENTAS</h1>
+  <form id="product-form">
+    <input type="text" id="nombre" placeholder="Nombre" required>
+    <select id="almacenamiento" required>
+      <option value="" disabled selected>Almacenamiento</option>
+      <option value="128Gb">128Gb</option>
+      <option value="256Gb">256Gb</option>
+      <option value="512Gb">512Gb</option>
+      <option value="1Tb">1Tb</option>
+    </select>
+    <select id="estado" required>
+      <option value="" disabled selected>Estado</option>
+      <option value="nuevo">Nuevo</option>
+      <option value="usado">Usado</option>
+    </select>
+    <input type="text" id="condicion_bateria" placeholder="Condición Batería" required>
+    <input type="text" id="color" placeholder="Color" required>
+    <input type="number" id="precio" placeholder="Precio" required>
+    <input type="number" id="cantidad" placeholder="Cantidad" required>
+    <input type="hidden" id="product-id"> <!-- Hidden input to store product ID -->
+    <button type="submit">Agregar Producto</button>
+    <button type="button" id="save-button" style="display: none;">Guardar cambios</button> <!-- Save button -->
+  </form>
+
+  <h2>STOCK DE PRODUCTOS</h2>
+  <div>
+    <label for="filter-name">Filtrar por nombre:</label>
+    <input type="text" id="filter-name" placeholder="Nombre del producto">
+    <label for="filter-storage">Filtrar por almacenamiento:</label>
+    <select id="filter-storage">
+      <option value="">Todos</option>
+      <option value="128Gb">128Gb</option>
+      <option value="256Gb">256Gb</option>
+      <option value="512Gb">512Gb</option>
+      <option value="1Tb">1Tb</option>
+    </select>
+  </div>
+
+  <table id="product-table">
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Almacenamiento</th>
+        <th>Estado</th>
+        <th>Condición Batería</th>
+        <th>Color</th>
+        <th>Precio</th>
+        <th>Cantidad</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <h2>VENTAS</h2>
+  <table id="sales-table">
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Precio</th>
+        <th>Cantidad</th>
+        <th>Fecha</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <h2>GANANCIAS</h2>
+  <table id="earnings-table">
+    <thead>
+      <tr>
+        <th>Periodo</th>
+        <th>Ganancias</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Hoy</td>
+        <td id="earnings-today">0</td>
+      </tr>
+      <tr>
+        <td>Semana</td>
+        <td id="earnings-week">0</td>
+      </tr>
+      <tr>
+        <td>Mes</td>
+        <td id="earnings-month">0</td>
+      </tr>
+      <tr>
+        <td>Año</td>
+        <td id="earnings-year">0</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div>
+    <label for="filter-date">Filtrar por día:</label>
+    <input type="date" id="filter-date">
+    <button id="filter-button">Filtrar</button>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>
