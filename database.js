@@ -13,9 +13,6 @@ db.serialize(() => {
     cantidad INTEGER
   )`);
 
-  // Eliminar la línea que elimina la tabla de ventas
-  // db.run(`DROP TABLE IF EXISTS ventas`);
-
   db.run(`CREATE TABLE IF NOT EXISTS ventas (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     nombre TEXT,
