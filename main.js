@@ -36,10 +36,8 @@ app.on('ready', () => {
 ipcMain.handle('add-product', async (event, product) => {
   try {
     if (product.id) {
-      // Si el producto tiene un ID, actualiza el producto existente
       await updateProduct(product.id, product);
     } else {
-      // Si el producto no tiene un ID, agrega un nuevo producto
       await addProduct(product);
     }
     return getProducts();
@@ -86,7 +84,7 @@ ipcMain.handle('sell-product', async (event, sale) => {
     };
     await addSale(saleData);
     await updateEarnings('daily', sale.precio * sale.cantidad);
-    await updateProductQuantity(sale.id, -sale.cantidad); // Restar la cantidad vendida
+    await updateProductQuantity(sale.id, -sale.cantidad);
     return getSales();
   } catch (error) {
     console.error('Error selling product:', error);

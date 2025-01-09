@@ -8,6 +8,8 @@
 </head>
 <body>
   <h1>SISTEMA DE VENTAS</h1>
+
+  <!-- Formulario para agregar producto -->
   <form id="product-form">
     <input type="text" id="nombre" placeholder="Nombre" required>
     <select id="almacenamiento" required>
@@ -26,9 +28,10 @@
     <input type="text" id="color" placeholder="Color" required>
     <input type="number" id="precio" placeholder="Precio" required>
     <input type="number" id="cantidad" placeholder="Cantidad" required>
-    <input type="hidden" id="product-id"> <!-- Hidden input to store product ID -->
-    <button type="submit">Agregar Producto</button>
+    <input type="hidden" id="product-id">
+    <button id="save-button" onclick="saveProduct()">Guardar producto</button> <!-- Hidden input to store product ID -->
     <button type="button" id="save-button" style="display: none;">Guardar cambios</button> <!-- Save button -->
+    <button type="submit">Guardar cambios</button>
   </form>
 
   <h2>STOCK DE PRODUCTOS</h2>
@@ -43,8 +46,19 @@
       <option value="512Gb">512Gb</option>
       <option value="1Tb">1Tb</option>
     </select>
+
+    <!-- Filtro por estado añadido -->
+    <label for="filter-state">Filtrar por estado:</label>
+    <select id="filter-state">
+      <option value="">Todos</option>
+      <option value="nuevo">Nuevo</option>
+      <option value="usado">Usado</option>
+    </select>
+
+    <button id="filter-button">Filtrar</button>
   </div>
 
+  <!-- Tabla de productos -->
   <table id="product-table">
     <thead>
       <tr>
@@ -103,6 +117,7 @@
     </tbody>
   </table>
 
+  <!-- Filtro por fecha -->
   <div>
     <label for="filter-date">Filtrar por día:</label>
     <input type="date" id="filter-date">

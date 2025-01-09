@@ -10,8 +10,12 @@ const filterButton = document.getElementById('filter-button');
 const filterNameInput = document.getElementById('filter-name');
 const filterStorageSelect = document.getElementById('filter-storage');
 
+let editingProductId = null; // Variable para almacenar el ID del producto que se está editando
+
+// Manejo del formulario de producto
 productForm.addEventListener('submit', async (e) => {
   e.preventDefault();
+
   const nombre = document.getElementById('nombre').value;
   const almacenamiento = document.getElementById('almacenamiento').value;
   const estado = document.getElementById('estado').value;
@@ -20,34 +24,53 @@ productForm.addEventListener('submit', async (e) => {
   const precio = parseFloat(document.getElementById('precio').value);
   const cantidad = parseInt(document.getElementById('cantidad').value);
 
-  const products = [];
-  for (let i = 0; i < cantidad; i++) {
-    products.push({
+  if (editingProductId === null) {
+    // Si no estamos editando un producto, agregar uno nuevo
+    const product = {
       nombre,
       almacenamiento,
       estado,
       condicion_bateria,
       color,
       precio,
-      cantidad: 1 // Cada objeto representa una unidad
-    });
+      cantidad
+    };
+    await window.electron.addProduct(product); // Llamar al backend para agregar un producto nuevo
+  } else {
+    // Si estamos editando un producto, agregamos uno nuevo y eliminamos el antiguo
+    const updatedProduct = {
+      nombre,
+      almacenamiento,
+      estado,
+      condicion_bateria,
+      color,
+      precio,
+      cantidad
+    };
+
+    // Crear el nuevo producto con los datos editados
+    await window.electron.addProduct(updatedProduct); // Agregar el producto editado como nuevo
+
+    // Eliminar el producto antiguo
+    await window.electron.deleteProduct(editingProductId); // Eliminar el producto original
+
+    editingProductId = null; // Restablecer el estado de edición
   }
 
-  for (const product of products) {
-    await window.electron.addProduct(product);
-  }
-  const allProducts = await window.electron.getProducts(); // Recargar productos después de agregar
-  renderProducts(allProducts);
+  const allProducts = await window.electron.getProducts(); // Recargar productos después de agregar o actualizar
+  renderProducts(allProducts); // Renderizar los productos
+
   clearFormFields(); // Limpiar los campos del formulario
 });
 
 window.electron.onProductsReply((products) => {
-  renderProducts(products);
+  renderProducts(products); // Mostrar productos en la tabla
 });
 
+// Función para renderizar los productos
 function renderProducts(products) {
   productTable.innerHTML = products.map(product => `
-    <tr>
+    <tr data-id="${product.id}">
       <td>${product.nombre}</td>
       <td>${product.almacenamiento}</td>
       <td>${product.estado}</td>
@@ -64,6 +87,7 @@ function renderProducts(products) {
   `).join('');
 }
 
+// Función para eliminar un producto
 function deleteProduct(id) {
   window.electron.deleteProduct(id).then(() => window.electron.getProducts().then(renderProducts));
 }
@@ -73,11 +97,17 @@ function sellProduct(id, precio) {
   const sale = {
     id: id,
     precio: precio,
-    cantidad: 1 // Cada objeto representa una unidad
+    cantidad: 1
   };
+
+  // Primero, vendemos el producto
   window.electron.sellProduct(sale).then(() => {
+    // Luego, eliminamos el producto de la tabla (del inventario)
+    window.electron.deleteProduct(id);
+
+    // Recargamos los productos y las ventas para mostrar los cambios
+    window.electron.getProducts().then(renderProducts);
     window.electron.getSales().then(renderSales);
-    window.electron.getProducts().then(renderProducts); // Recargar productos después de vender
   });
 }
 
@@ -91,7 +121,77 @@ async function editProduct(id) {
   document.getElementById('color').value = product.color;
   document.getElementById('precio').value = product.precio;
   document.getElementById('cantidad').value = product.cantidad;
-  // Aquí puedes agregar lógica adicional para manejar la edición del producto
+
+  editingProductId = id; // Almacenamos el ID del producto que estamos editando
+
+  // Cambiar el texto del botón de 'Guardar producto' a 'Guardar cambios'
+  const saveButton = document.getElementById('save-button');
+  saveButton.textContent = 'Guardar cambios';
+  saveButton.onclick = () => saveProductChanges(); // Cambiar la acción del botón
+}
+
+// Función para guardar los cambios de un producto
+async function saveProductChanges() {
+  const nombre = document.getElementById('nombre').value;
+  const almacenamiento = document.getElementById('almacenamiento').value;
+  const estado = document.getElementById('estado').value;
+  const condicion_bateria = document.getElementById('condicion_bateria').value;
+  const color = document.getElementById('color').value;
+  const precio = parseFloat(document.getElementById('precio').value);
+  const cantidad = parseInt(document.getElementById('cantidad').value);
+
+  const updatedProduct = {
+    nombre,
+    almacenamiento,
+    estado,
+    condicion_bateria,
+    color,
+    precio,
+    cantidad
+  };
+
+  // Crear el nuevo producto con los datos editados
+  await window.electron.addProduct(updatedProduct); // Agregar el producto editado como nuevo
+
+  // Eliminar el producto antiguo
+  await window.electron.deleteProduct(editingProductId); // Eliminar el producto original
+
+  const allProducts = await window.electron.getProducts(); // Recargar productos después de actualizar
+  renderProducts(allProducts); // Renderizar los productos
+
+  clearFormFields(); // Limpiar los campos del formulario
+  editingProductId = null; // Restablecer el estado de edición
+
+  // Restablecer el texto y acción del botón
+  const saveButton = document.getElementById('save-button');
+  saveButton.textContent = 'Guardar producto';
+  saveButton.onclick = () => saveProduct(); // Vuelve a la acción original
+}
+
+// Función para guardar un producto nuevo (si no se está editando)
+async function saveProduct() {
+  const nombre = document.getElementById('nombre').value;
+  const almacenamiento = document.getElementById('almacenamiento').value;
+  const estado = document.getElementById('estado').value;
+  const condicion_bateria = document.getElementById('condicion_bateria').value;
+  const color = document.getElementById('color').value;
+  const precio = parseFloat(document.getElementById('precio').value);
+  const cantidad = parseInt(document.getElementById('cantidad').value);
+
+  const product = {
+    nombre,
+    almacenamiento,
+    estado,
+    condicion_bateria,
+    color,
+    precio,
+    cantidad
+  };
+
+  await window.electron.addProduct(product); // Llamar al backend para agregar un nuevo producto
+  const allProducts = await window.electron.getProducts(); // Recargar productos después de agregar
+  renderProducts(allProducts); // Renderizar los productos
+  clearFormFields(); // Limpiar los campos del formulario
 }
 
 // Función para eliminar una venta y devolver el producto al stock
@@ -117,6 +217,7 @@ window.electron.onSalesReply((sales) => {
   renderSales(sales);
 });
 
+// Función para renderizar las ventas
 function renderSales(sales) {
   salesTable.innerHTML = sales.map(sale => {
     const saleDate = new Date(sale.fecha);
@@ -157,74 +258,18 @@ function calculateEarnings(sales) {
 
   sales.forEach(sale => {
     const saleDate = new Date(sale.fecha);
-    if (saleDate >= startOfDay) {
-      earningsTodayTotal += sale.precio * sale.cantidad;
-    }
-    if (saleDate >= startOfWeek) {
-      earningsWeekTotal += sale.precio * sale.cantidad;
-    }
-    if (saleDate >= startOfMonth) {
-      earningsMonthTotal += sale.precio * sale.cantidad;
-    }
-    if (saleDate >= startOfYear) {
-      earningsYearTotal += sale.precio * sale.cantidad;
-    }
+
+    if (saleDate >= startOfDay) earningsTodayTotal += sale.precio * sale.cantidad;
+    if (saleDate >= startOfWeek) earningsWeekTotal += sale.precio * sale.cantidad;
+    if (saleDate >= startOfMonth) earningsMonthTotal += sale.precio * sale.cantidad;
+    if (saleDate >= startOfYear) earningsYearTotal += sale.precio * sale.cantidad;
   });
 
-  earningsToday.textContent = earningsTodayTotal.toFixed(2);
-  earningsWeek.textContent = earningsWeekTotal.toFixed(2);
-  earningsMonth.textContent = earningsMonthTotal.toFixed(2);
-  earningsYear.textContent = earningsYearTotal.toFixed(2);
+  earningsToday.textContent = `$${earningsTodayTotal}`;
+  earningsWeek.textContent = `$${earningsWeekTotal}`;
+  earningsMonth.textContent = `$${earningsMonthTotal}`;
+  earningsYear.textContent = `$${earningsYearTotal}`;
 }
-
-// Función para filtrar las ganancias por día
-filterButton.addEventListener('click', () => {
-  let filterDate = new Date(filterDateInput.value);
-  if (isNaN(filterDate)) {
-    alert('Por favor, selecciona una fecha válida.');
-    return;
-  }
-
-  // Restar un día a la fecha del filtro
-  filterDate.setDate(filterDate.getDate() + 1);
-
-  window.electron.getSales().then(sales => {
-    const filteredSales = sales.filter(sale => {
-      const saleDate = new Date(sale.fecha);
-      // Ajustar la fecha de la venta a medianoche local
-      const saleDateLocal = new Date(saleDate.getFullYear(), saleDate.getMonth(), saleDate.getDate());
-      return (
-        saleDateLocal.getFullYear() === filterDate.getFullYear() &&
-        saleDateLocal.getMonth() === filterDate.getMonth() &&
-        saleDateLocal.getDate() === filterDate.getDate()
-      );
-    });
-
-    renderSales(filteredSales);
-  });
-});
-
-// Función para filtrar productos por nombre
-filterNameInput.addEventListener('input', () => {
-  const filterName = filterNameInput.value.trim().toLowerCase();
-  window.electron.getProducts().then(products => {
-    const filteredProducts = products.filter(product => {
-      return product.nombre.toLowerCase().includes(filterName);
-    });
-    renderProducts(filteredProducts);
-  });
-});
-
-// Función para filtrar productos por almacenamiento
-filterStorageSelect.addEventListener('change', () => {
-  const filterStorage = filterStorageSelect.value.trim();
-  window.electron.getProducts().then(products => {
-    const filteredProducts = products.filter(product => {
-      return filterStorage === '' || product.almacenamiento === filterStorage;
-    });
-    renderProducts(filteredProducts);
-  });
-});
 
 // Función para limpiar los campos del formulario
 function clearFormFields() {
@@ -236,6 +281,7 @@ function clearFormFields() {
   document.getElementById('precio').value = '';
   document.getElementById('cantidad').value = '';
 }
+
 
 // Obtener productos y ventas al cargar la página
 window.electron.getProducts().then(renderProducts);
