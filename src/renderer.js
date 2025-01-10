@@ -1,3 +1,6 @@
+// Variable global para almacenar el id del producto que se está editando
+let editingProductId = null;
+
 // Selección de elementos del DOM
 const productForm = document.getElementById('product-form');
 const productTable = document.querySelector('#product-table tbody');
@@ -33,8 +36,15 @@ productForm.addEventListener('submit', async (e) => {
     cantidad: 1
   }));
 
-  for (const product of products) {
-    await window.electron.addProduct(product);
+  if (editingProductId) {
+    // Si estamos editando, actualizar el producto en lugar de crear uno nuevo
+    await window.electron.updateProduct(editingProductId, products[0]);
+    editingProductId = null; // Resetear la variable para evitar futuros conflictos
+  } else {
+    // Si no estamos editando, crear nuevos productos
+    for (const product of products) {
+      await window.electron.addProduct(product);
+    }
   }
 
   const allProducts = await window.electron.getProducts();
@@ -95,6 +105,8 @@ async function editProduct(id) {
   document.getElementById('color').value = product.color;
   document.getElementById('precio').value = product.precio;
   document.getElementById('cantidad').value = product.cantidad;
+
+  editingProductId = product.id; // Asignar el id del producto que se está editando
 }
 
 // Eliminar venta
@@ -117,7 +129,6 @@ async function deleteSale(id) {
   window.electron.getSales().then(renderSales); // Recargar la tabla de ventas
   window.electron.getProducts().then(renderProducts); // Recargar la tabla de productos
 }
-
 
 // Renderizado de ventas
 function renderSales(sales) {
