@@ -36,8 +36,10 @@ app.on('ready', () => {
 ipcMain.handle('add-product', async (event, product) => {
   try {
     if (product.id) {
+      // Si el producto ya tiene un id, actualizamos el producto existente
       await updateProduct(product.id, product);
     } else {
+      // Si no tiene id, se crea un nuevo producto
       await addProduct(product);
     }
     return getProducts();
@@ -105,32 +107,17 @@ ipcMain.handle('delete-sale', async (event, id) => {
   try {
     const sale = await getSaleById(id);
     if (!sale) {
-      throw new Error(`Sale with id ${id} not found`);
+      throw new Error(`Venta con id ${id} no encontrada`);
     }
 
-    const existingProduct = await getProductByNameAndAttributes(
-      sale.nombre,
-      sale.almacenamiento,
-      sale.estado,
-      sale.condicion_bateria,
-      sale.color
-    );
-
-    if (existingProduct) {
-      await updateProductQuantity(existingProduct.id, sale.cantidad);
-    } else {
-      const product = {
-        nombre: sale.nombre,
-        almacenamiento: sale.almacenamiento,
-        estado: sale.estado,
-        condicion_bateria: sale.condicion_bateria,
-        color: sale.color,
-        precio: sale.precio,
-        cantidad: sale.cantidad
-      };
-      await addProduct(product);
+    const product = await getProductById(sale.id);
+    if (!product) {
+      console.log(`Producto con id ${sale.id} ya no existe en la base de datos. No se puede restaurar la cantidad.`);
+      await deleteSale(id);
+      return getSales();
     }
 
+    await updateProductQuantity(sale.id, sale.cantidad);
     await deleteSale(id);
     return getSales();
   } catch (error) {
@@ -166,10 +153,15 @@ ipcMain.handle('get-sale-by-id', async (event, id) => {
   }
 });
 
-ipcMain.handle('update-product', async (event, id, product) => {
+ipcMain.handle('update-product', async (event, id, updatedProduct) => {
   try {
-    await updateProduct(id, product);
-    return getProducts();
+    const product = await getProductById(id);
+    if (!product) {
+      throw new Error(`Producto con id ${id} no encontrado`);
+    }
+    // Solo actualizamos el producto existente
+    await updateProduct(id, updatedProduct);
+    return getProducts(); // Retornamos los productos después de la actualización
   } catch (error) {
     console.error('Error updating product:', error);
     throw error;
