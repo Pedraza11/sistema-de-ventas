@@ -1,4 +1,3 @@
-// Variable global para almacenar el id del producto que se está editando
 let editingProductId = null;
 
 // Selección de elementos del DOM
@@ -14,6 +13,13 @@ const filterButton = document.getElementById('filter-button');
 const filterNameInput = document.getElementById('filter-name');
 const filterStorageSelect = document.getElementById('filter-storage');
 const filterStateSelect = document.getElementById('filter-state');
+
+// Función que suma un día a la fecha proporcionada
+function addOneDayToDate(date) {
+  const newDate = new Date(date);
+  newDate.setDate(newDate.getDate() + 1);
+  return newDate;
+}
 
 // Manejo del formulario de productos
 productForm.addEventListener('submit', async (e) => {
@@ -198,13 +204,15 @@ filterButton.addEventListener('click', () => {
     return;
   }
 
+  const filterDatePlusOne = addOneDayToDate(filterDate); // Sumar un día a la fecha
+
   window.electron.getSales().then(sales => {
     const filteredSales = sales.filter(sale => {
       const saleDate = new Date(sale.fecha);
       return (
-        saleDate.getFullYear() === filterDate.getFullYear() &&
-        saleDate.getMonth() === filterDate.getMonth() &&
-        saleDate.getDate() === filterDate.getDate()
+        saleDate.getFullYear() === filterDatePlusOne.getFullYear() &&
+        saleDate.getMonth() === filterDatePlusOne.getMonth() &&
+        saleDate.getDate() === filterDatePlusOne.getDate()
       );
     });
 
