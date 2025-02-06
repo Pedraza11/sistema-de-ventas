@@ -13,10 +13,15 @@ const {
   getSaleById,
   updateProduct,
   updateProductQuantity,
-  getProductByNameAndAttributes
+  getProductByNameAndAttributes,
+  addReservation,
+  getReservations,
+  deleteReservation,
+  
 } = require('./database');
 
 let mainWindow;
+
 
 app.on('ready', () => {
   mainWindow = new BrowserWindow({
@@ -31,6 +36,7 @@ app.on('ready', () => {
   });
 
   mainWindow.loadFile(path.join(__dirname, 'src', 'index.html'));
+  mainWindow.webContents.openDevTools();
 });
 
 ipcMain.handle('add-product', async (event, product) => {
@@ -164,6 +170,35 @@ ipcMain.handle('update-product', async (event, id, updatedProduct) => {
     return getProducts(); // Retornamos los productos después de la actualización
   } catch (error) {
     console.error('Error updating product:', error);
+    throw error;
+  }
+});
+
+ipcMain.handle('add-reservation', async (event, reservation) => {
+  try {
+    await addReservation(reservation);
+    return getReservations();
+  } catch (error) {
+    console.error('Error adding reservation:', error);
+    throw error;
+  }
+});
+
+ipcMain.handle('get-reservations', async () => {
+  try {
+    return getReservations();
+  } catch (error) {
+    console.error('Error getting reservations:', error);
+    throw error;
+  }
+});
+
+ipcMain.handle('delete-reservation', async (event, id) => {
+  try {
+    await deleteReservation(id);
+    return getReservations();
+  } catch (error) {
+    console.error('Error deleting reservation:', error);
     throw error;
   }
 });

@@ -12,5 +12,9 @@ contextBridge.exposeInMainWorld('electron', {
   getSaleById: (id) => ipcRenderer.invoke('get-sale-by-id', id), // Exponer la función
   updateProduct: (id, product) => ipcRenderer.invoke('update-product', id, product),
   onProductsReply: (callback) => ipcRenderer.on('get-products-reply', (_, products) => callback(products)),
-  onSalesReply: (callback) => ipcRenderer.on('get-sales-reply', (_, sales) => callback(sales))
+  onSalesReply: (callback) => ipcRenderer.on('get-sales-reply', (_, sales) => callback(sales)),
+  addReservation: (reservation) => ipcRenderer.invoke('add-reservation', reservation),
+  getReservations: () => ipcRenderer.invoke('get-reservations'),
+  deleteReservation: (id) => ipcRenderer.invoke('delete-reservation', id),
+  getReservationById: (id) => ipcRenderer.invoke('get-reservation-by-id', id)
 });

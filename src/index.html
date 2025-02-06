@@ -19,16 +19,34 @@
       <option value="512Gb">512Gb</option>
       <option value="1Tb">1Tb</option>
     </select>
-    <select id="estado" required>
+    <select id="estado" required onchange="updateBatteryCondition()">
       <option value="" disabled selected>Estado</option>
       <option value="nuevo">Nuevo</option>
       <option value="usado">Usado</option>
     </select>
     <input type="text" id="condicion_bateria" placeholder="Condición Batería" required>
+    <script>
+      function updateBatteryCondition() {
+      const estado = document.getElementById('estado').value;
+      const condicionBateria = document.getElementById('condicion_bateria');
+      if (estado === 'nuevo') {
+        condicionBateria.value = 100;
+      } else {
+        condicionBateria.value = '';
+      }
+      }
+    </script>
     <input type="text" id="color" placeholder="Color" required>
     <input type="number" id="precio" placeholder="Precio" required>
     <input type="number" id="cantidad" placeholder="Cantidad" required>
-    <input type="hidden" id="product-id">
+    
+    <!-- Nuevos campos -->
+    <input type="text" id="proveedor" placeholder="Proveedor" required>
+    <input type="text" id="nro_serie" placeholder="Número de Serie" required>
+    <input type="date" id="fecha_ingreso" required>
+    
+    <input type="hidden" id="product-id"> <!-- Hidden input to store product ID -->
+    
     <button id="save-button" onclick="saveProduct()">Guardar producto</button> <!-- Hidden input to store product ID -->
     <button type="button" id="save-button" style="display: none;">Guardar cambios</button> <!-- Save button -->
     <button type="submit">Guardar cambios</button>
@@ -46,6 +64,10 @@
       <option value="512Gb">512Gb</option>
       <option value="1Tb">1Tb</option>
     </select>
+    <label for="filter-date-oldest">Filtrar por fecha más antigua:</label>
+    <input type="date" id="filter-date-oldest">
+    <button id="filter-oldest-button">Filtrar</button>
+    
 
     <!-- Filtro por estado añadido -->
     <label for="filter-state">Filtrar por estado:</label>
@@ -68,6 +90,9 @@
         <th>Color</th>
         <th>Precio</th>
         <th>Cantidad</th>
+        <th>Proveedor</th>  <!-- Nueva columna -->
+        <th>Nro de Serie</th> <!-- Nueva columna -->
+        <th>Fecha de Ingreso</th> <!-- Nueva columna -->
         <th>Acciones</th>
       </tr>
     </thead>
@@ -76,6 +101,20 @@
 
   <h2>VENTAS</h2>
   <table id="sales-table">
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Precio</th>
+        <th>Cantidad</th>
+        <th>Fecha</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <h2>RESERVAS</h2>
+  <table id="reservations-table">
     <thead>
       <tr>
         <th>Nombre</th>
@@ -122,7 +161,38 @@
     <input type="date" id="filter-date">
     <button id="filter-button">Filtrar</button>
   </div>
-
+  <div id="sellModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal()">&times;</span>
+      <h2>Datos del Cliente</h2>
+      <form id="sell-form">
+        <label for="cliente-nombre">Nombre:</label>
+        <input type="text" id="cliente-nombre" required>
+        
+        <label for="cliente-localidad">Localidad:</label>
+        <input type="text" id="cliente-localidad" required>
+        
+        <label for="cliente-telefono">Teléfono:</label>
+        <input type="text" id="cliente-telefono" required>
+        
+        <label for="metodo-pago">Método de Pago:</label>
+        <select id="metodo-pago" required>
+          <option value="" disabled selected>Seleccione un método</option>
+          <option value="usd">USD</option>
+          <option value="pesos">Pesos</option>
+          <option value="transferencia">Transferencia</option>
+        </select>
+        
+        <label for="vendedor">Vendedor:</label>
+        <input type="text" id="vendedor" required>
+        
+        <label for="precio-venta">Precio de Venta:</label>
+        <input type="number" id="precio-venta" required>
+        
+        <button type="submit">Confirmar Venta</button>
+      </form>
+    </div>
+  </div>
   <script src="renderer.js"></script>
 </body>
 </html>

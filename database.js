@@ -10,7 +10,10 @@ db.serialize(() => {
     condicion_bateria TEXT,
     color TEXT,
     precio REAL,
-    cantidad INTEGER
+    cantidad INTEGER,
+    proveedor TEXT,            -- Nueva columna
+    nro_serie TEXT,            -- Nueva columna
+    fecha_ingreso TEXT         -- Nueva columna
   )`);
 
   db.run(`CREATE TABLE IF NOT EXISTS ventas (
@@ -32,13 +35,26 @@ db.serialize(() => {
     fecha TEXT
   )`);
 });
+db.serialize(() => {
+  db.run(`CREATE TABLE IF NOT EXISTS reservas (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nombre TEXT,
+    almacenamiento TEXT,
+    estado TEXT,
+    condicion_bateria TEXT,
+    color TEXT,
+    precio REAL,
+    cantidad INTEGER,
+    fecha TEXT
+  )`);
+});
 
 function addProduct(product) {
   return new Promise((resolve, reject) => {
-    const { nombre, almacenamiento, estado, condicion_bateria, color, precio, cantidad } = product;
+    const { nombre, almacenamiento, estado, condicion_bateria, color, precio, cantidad, proveedor, nro_serie, fecha_ingreso } = product;
     db.run(
-      `INSERT INTO productos (nombre, almacenamiento, estado, condicion_bateria, color, precio, cantidad) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [nombre, almacenamiento, estado, condicion_bateria, color, precio, cantidad],
+      `INSERT INTO productos (nombre, almacenamiento, estado, condicion_bateria, color, precio, cantidad, proveedor, nro_serie, fecha_ingreso) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [nombre, almacenamiento, estado, condicion_bateria, color, precio, cantidad, proveedor, nro_serie, fecha_ingreso],
       function (err) {
         if (err) {
           reject(err);
@@ -170,10 +186,10 @@ function getSaleById(id) {
 
 function updateProduct(id, product) {
   return new Promise((resolve, reject) => {
-    const { nombre, almacenamiento, estado, condicion_bateria, color, precio, cantidad } = product;
+    const { nombre, almacenamiento, estado, condicion_bateria, color, precio, cantidad, proveedor, nro_serie, fecha_ingreso } = product;
     db.run(
-      `UPDATE productos SET nombre = ?, almacenamiento = ?, estado = ?, condicion_bateria = ?, color = ?, precio = ?, cantidad = ? WHERE id = ?`,
-      [nombre, almacenamiento, estado, condicion_bateria, color, precio, cantidad, id],
+      `UPDATE productos SET nombre = ?, almacenamiento = ?, estado = ?, condicion_bateria = ?, color = ?, precio = ?, cantidad = ?, proveedor = ?, nro_serie = ?, fecha_ingreso = ? WHERE id = ?`,
+      [nombre, almacenamiento, estado, condicion_bateria, color, precio, cantidad, proveedor, nro_serie, fecha_ingreso, id],
       function (err) {
         if (err) {
           reject(err);
@@ -216,6 +232,47 @@ function getProductByNameAndAttributes(nombre, almacenamiento, estado, condicion
     );
   });
 }
+function addReservation(reservation) {
+  return new Promise((resolve, reject) => {
+    const { nombre, almacenamiento, estado, condicion_bateria, color, precio, cantidad, fecha } = reservation;
+    db.run(
+      `INSERT INTO reservas (nombre, almacenamiento, estado, condicion_bateria, color, precio, cantidad, fecha) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [nombre, almacenamiento, estado, condicion_bateria, color, precio, cantidad, fecha],
+      function (err) {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(this.lastID);
+        }
+      }
+    );
+  });
+}
+
+function getReservations() {
+  return new Promise((resolve, reject) => {
+    db.all(`SELECT * FROM reservas`, (err, rows) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(rows);
+      }
+    });
+  });
+}
+
+function deleteReservation(id) {
+  return new Promise((resolve, reject) => {
+    db.run(`DELETE FROM reservas WHERE id = ?`, [id], function (err) {
+      if (err) {
+        reject(err);
+      } else {
+        resolve();
+      }
+    });
+  });
+}
+
 
 module.exports = {
   addProduct,
@@ -230,5 +287,8 @@ module.exports = {
   getSaleById,
   updateProduct,
   updateProductQuantity,
-  getProductByNameAndAttributes
+  getProductByNameAndAttributes,
+  addReservation,
+  getReservations,
+  deleteReservation
 };

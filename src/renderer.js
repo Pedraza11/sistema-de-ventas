@@ -31,6 +31,9 @@ productForm.addEventListener('submit', async (e) => {
   const color = document.getElementById('color').value;
   const precio = parseFloat(document.getElementById('precio').value);
   const cantidad = parseInt(document.getElementById('cantidad').value);
+  const proveedor = document.getElementById('proveedor').value;
+  const nro_serie = document.getElementById('nro_serie').value;
+  const fecha_ingreso = document.getElementById('fecha_ingreso').value;
 
   const products = Array.from({ length: cantidad }, () => ({
     nombre,
@@ -39,7 +42,10 @@ productForm.addEventListener('submit', async (e) => {
     condicion_bateria,
     color,
     precio,
-    cantidad: 1
+    cantidad: 1,
+    proveedor,
+    nro_serie,
+    fecha_ingreso
   }));
 
   if (editingProductId) {
@@ -72,10 +78,14 @@ function renderProducts(products) {
             <td>${product.color}</td>
             <td>${product.precio}</td>
             <td>${product.cantidad}</td>
+            <td>${product.proveedor}</td>
+            <td>${product.nro_serie}</td>
+            <td>${product.fecha_ingreso}</td>
             <td>
               <button onclick="sellProduct(${product.id}, ${product.precio})">Vender</button>
               <button onclick="editProduct(${product.id})">Editar</button>
               <button onclick="deleteProduct(${product.id})">Eliminar</button>
+              <button onclick="reserveProduct(${product.id})">Señar</button>
             </td>
           </tr>
         `;
@@ -100,6 +110,49 @@ function sellProduct(id, precio) {
       window.electron.getProducts().then(renderProducts);
     });
 }
+// Abrir modal de venta
+function openSellModal(id, precio) {
+  const sellModal = document.getElementById('sellModal');
+  sellModal.style.display = 'block';
+
+  const sellForm = document.getElementById('sell-form');
+  sellForm.onsubmit = async (e) => {
+    e.preventDefault();
+    const clienteNombre = document.getElementById('cliente-nombre').value;
+    const clienteLocalidad = document.getElementById('cliente-localidad').value;
+    const clienteTelefono = document.getElementById('cliente-telefono').value;
+    const metodoPago = document.getElementById('metodo-pago').value;
+    const vendedor = document.getElementById('vendedor').value;
+    const precioVenta = parseFloat(document.getElementById('precio-venta').value);
+
+    const sale = {
+      id,
+      precio: precioVenta,
+      cantidad: 1,
+      clienteNombre,
+      clienteLocalidad,
+      clienteTelefono,
+      metodoPago,
+      vendedor
+    };
+
+    await window.electron.sellProduct(sale);
+    window.electron.getSales().then(renderSales);
+    window.electron.getProducts().then(renderProducts);
+    closeModal();
+  };
+}
+
+// Cerrar modal de venta
+function closeModal() {
+  const sellModal = document.getElementById('sellModal');
+  sellModal.style.display = 'none';
+}
+
+// Modificar la función sellProduct para abrir el modal
+function sellProduct(id, precio) {
+  openSellModal(id, precio);
+}
 
 // Editar producto
 async function editProduct(id) {
@@ -111,6 +164,9 @@ async function editProduct(id) {
   document.getElementById('color').value = product.color;
   document.getElementById('precio').value = product.precio;
   document.getElementById('cantidad').value = product.cantidad;
+  document.getElementById('proveedor').value = product.proveedor;
+  document.getElementById('nro_serie').value = product.nro_serie;
+  document.getElementById('fecha_ingreso').value = product.fecha_ingreso;
 
   editingProductId = product.id; // Asignar el id del producto que se está editando
 }
@@ -128,6 +184,9 @@ async function deleteSale(id) {
     color: sale.color,
     precio: sale.precio,
     cantidad: 1, // Siempre regresar 1 unidad al stock
+    proveedor: sale.proveedor,
+    nro_serie: sale.nro_serie,
+    fecha_ingreso: sale.fecha_ingreso
   };
 
   await window.electron.addProduct(product); // Agregar el producto al inventario
@@ -157,7 +216,6 @@ function renderSales(sales) {
       `;
     })
     .join('');
-
   calculateEarnings(sales);
 }
 
@@ -252,11 +310,87 @@ filterStateSelect.addEventListener('change', () => {
     renderProducts(filteredProducts);
   });
 });
+// Filtrar productos por fecha de ingreso más antigua
+filterDateInput.addEventListener('change', () => {
+  const filterDate = new Date(filterDateInput.value);
+  if (isNaN(filterDate)) {
+    alert('Por favor, selecciona una fecha válida.');
+    return;
+  }
+
+  window.electron.getProducts().then(products => {
+    const filteredProducts = products.filter(product => {
+      const productDate = new Date(product.fecha_ingreso);
+      return productDate <= filterDate;
+    });
+    renderProducts(filteredProducts);
+  });
+});
+
 
 // Limpiar formulario
 function clearFormFields() {
   productForm.reset();
 }
+
+
+const reservationsTable = document.querySelector('#reservations-table tbody');
+
+// Renderizado de reservas
+function renderReservations(reservations) {
+  reservationsTable.innerHTML = reservations
+    .map(reservation => {
+      const reservationDate = new Date(reservation.fecha);
+      const formattedDate = reservationDate.toLocaleDateString('es-ES', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      });
+      return `
+        <tr>
+          <td>${reservation.nombre}</td>
+          <td>${reservation.precio}</td>
+          <td>${reservation.cantidad}</td>
+          <td>${formattedDate}</td>
+          <td>
+            <button onclick="deleteReservation(${reservation.id})">Eliminar</button>
+            <button onclick="sellReservedProduct(${reservation.id})">Vendido</button>
+          </td>
+        </tr>
+      `;
+    })
+    .join('');
+}
+
+// Reservar producto
+function reserveProduct(id) {
+  window.electron.getProductById(id).then(product => {
+    const reservation = {
+      nombre: product.nombre,
+      almacenamiento: product.almacenamiento,
+      estado: product.estado,
+      condicion_bateria: product.condicion_bateria,
+      color: product.color,
+      precio: product.precio,
+      cantidad: 1,
+      fecha: new Date().toISOString()
+    };
+    window.electron.addReservation(reservation)
+      .then(() => {
+        window.electron.getReservations().then(renderReservations);
+        window.electron.getProducts().then(renderProducts);
+      });
+  });
+}
+
+// Eliminar reserva
+function deleteReservation(id) {
+  window.electron.deleteReservation(id)
+    .then(() => window.electron.getReservations().then(renderReservations));
+}
+
+// Inicialización de datos
+window.electron.getReservations().then(renderReservations);
 
 // Inicialización de datos
 window.electron.getProducts().then(renderProducts);
